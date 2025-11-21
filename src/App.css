@@ -113,6 +113,33 @@
   cursor: not-allowed;
 }
 
+.secondary-button {
+  background: white;
+  color: #667eea;
+  border: 2px solid #667eea;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.secondary-button:hover:not(:disabled) {
+  background: #667eea;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
+.secondary-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Messages */
 .error-message {
   background: #fee;
@@ -140,6 +167,28 @@
   margin-top: 1rem;
   border-radius: 4px;
   color: #d63031;
+}
+
+.info-box {
+  background: #e3f2fd;
+  border-left: 5px solid #2196f3;
+  padding: 1.5rem;
+  margin-top: 1rem;
+  border-radius: 4px;
+  color: #1565c0;
+}
+
+.info-box h4 {
+  color: #1565c0;
+  font-size: 1.1rem;
+}
+
+.info-box ul {
+  color: #1976d2;
+}
+
+.info-box li {
+  margin-bottom: 0.5rem;
 }
 
 /* Girone sections */

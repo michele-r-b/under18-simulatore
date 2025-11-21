@@ -11,16 +11,16 @@ WebApp per simulare le fasi finali del campionato Under 18 Femminile FIPAV Berga
 
 ### 2. **Modifica e Simulazione**
 - Modifica manuale dei dati di classifica per ogni squadra:
-  - **P**: Punti
-  - **G**: Partite giocate
-  - **V**: Partite vinte
-  - **Pe**: Partite perse
-  - **SV**: Set vinti
-  - **SP**: Set persi
-  - **QS**: Quoziente set (calcolato automaticamente)
-  - **PF**: Punti fatti
-  - **PS**: Punti subiti
-  - **QP**: Quoziente punti (calcolato automaticamente)
+  - **PuntiCampionato**: Punti
+  - **GareGiocate**: Partite giocate
+  - **GareVinte**: Partite vinte
+  - **GarePerse**: Partite perse
+  - **SetVinti**: Set vinti
+  - **SetPersi**: Set persi
+  - **QuozienteSet**: Quoziente set (calcolato automaticamente)
+  - **PuntiFatti**: Punti fatti
+  - **PuntiSubiti**: Punti subiti
+  - **QuozientePunti**: Quoziente punti (calcolato automaticamente)
 - Visualizzazione evidenziata delle prime 2 squadre per girone (qualificate)
 
 ### 3. **Classifica Avulsa e Tabellone**
@@ -107,7 +107,7 @@ I SID (Season ID) dei gironi:
 
 ### Passo 2: Modifica Dati
 1. Modifica i valori nelle tabelle per simulare diversi scenari
-2. I quozienti QS e QP vengono ricalcolati automaticamente
+2. I quozienti QuozienteSet e QuozientePunti vengono ricalcolati automaticamente
 3. Le prime 2 squadre di ogni girone sono evidenziate in verde
 
 ### Passo 3: Genera Tabellone
