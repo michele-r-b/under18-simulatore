@@ -24,8 +24,8 @@ export function mapApiToTeamStats(rawTeam: ApiTeamRaw, girone: Girone): TeamStat
   const GarePerse = Number(rawTeam.l ?? 0);
   
   const QuozienteSet = SetPersi > 0 ? SetVinti / SetPersi : 999;
-  const QuozientePunti = PuntiSubiti > 0 ? PuntiFatti / PuntiSubiti : PuntiFatti;
-  const QuozienteGare = GareGiocate > 0 ? PuntiCampionato / GareGiocate : GareVinte;
+  const QuozientePunti = PuntiFatti / PuntiSubiti ;
+  const QuozienteGare =  PuntiCampionato / GareGiocate ;
 
   return {
     id,
@@ -54,7 +54,7 @@ export function mapApiToTeamStats(rawTeam: ApiTeamRaw, girone: Girone): TeamStat
  * 5. Ordine alfabetico
  */
 export function compareTeams(a: TeamStats, b: TeamStats): number {
-  // 1) Punti campionato
+  // 1) Quoziente gare
   if (b.PuntiCampionato !== a.PuntiCampionato) {
     return b.PuntiCampionato - a.PuntiCampionato;
   }
@@ -73,6 +73,34 @@ export function compareTeams(a: TeamStats, b: TeamStats): number {
   return 0;
 }
 
+
+/**
+ * Confronta due squadre secondo i criteri del regolamento Avulsa:
+ * 1. Punti campionato
+ * 2. Quoziente set
+ * 3. Quoziente punti
+ * 4. Differenza punti
+ * 5. Ordine alfabetico
+ */
+export function compareTeamsA(a: TeamStats, b: TeamStats): number {
+  // 1) Quoziente gare
+  if (b.QuozienteGare !== a.QuozienteGare) {
+    return b.QuozienteGare - a.QuozienteGare;
+  }
+  
+  // 2) Quoziente set
+  if (Math.abs(b.QuozienteSet - a.QuozienteSet) > 0.001) {
+    return b.QuozienteSet - a.QuozienteSet;
+  }
+  
+  // 3) Quoziente punti
+  if (Math.abs(b.QuozientePunti - a.QuozientePunti) > 0.001) {
+    return b.QuozientePunti - a.QuozientePunti;
+  }
+  
+  // Se tutto è uguale, mantieni ordine originale
+  return 0;
+}
 /**
  * Ricalcola i quozienti automatici quando cambiano i valori
  */
@@ -92,9 +120,7 @@ export function recalculateQuotients(
   
   // Ricalcola QuozientePunti
   if (field === 'PuntiFatti' || field === 'PuntiSubiti') {
-    updated.QuozientePunti = updated.PuntiSubiti > 0 
-      ? updated.PuntiFatti / updated.PuntiSubiti 
-      : updated.PuntiFatti;
+    updated.QuozientePunti = updated.PuntiFatti / updated.PuntiSubiti ;
   }
   
   // Ricalcola QuozienteGare
@@ -169,10 +195,10 @@ export function calculateAvulsa(teams: TeamStats[]): TeamStats[] {
   });
 
   // 2) posizioni 1-4 con le prime, ordinate dai criteri generali
-  const primeOrdinate = [...primeDiGirone].sort(compareTeams);
+  const primeOrdinate = [...primeDiGirone].sort(compareTeamsA);
 
   // 3) posizioni 5-8 con le seconde, ordinate dai criteri generali
-  const secondeOrdinate = [...secondeDiGirone].sort(compareTeams);
+  const secondeOrdinate = [...secondeDiGirone].sort(compareTeamsA);
 
   const avulsa = [...primeOrdinate, ...secondeOrdinate];
 

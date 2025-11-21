@@ -372,6 +372,7 @@
 .avulsa-table td {
   padding: 1rem;
   border-bottom: 1px solid #dee2e6;
+  color: #333;
 }
 
 .avulsa-table tbody tr:last-child td {
@@ -432,6 +433,11 @@
 
 .conflict-row:hover {
   background-color: #ffdede !important;
+}
+
+.conflict-row td {  /* ← AGGIUNGI questa regola */
+  color: #c53030 !important;
+  font-weight: 500;
 }
 
 .conflict-row .position-cell,

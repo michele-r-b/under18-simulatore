@@ -10,6 +10,12 @@ interface AvulsaTableProps {
 }
 
 export const AvulsaTable: React.FC<AvulsaTableProps> = ({ teams }) => {
+  const formatQuoziente = (value: number | undefined) => {
+    const num = Number(value);
+    if (!Number.isFinite(num)) return '—';
+    return num.toFixed(3);
+  };
+
   const conflictIndexes = React.useMemo(() => {
     const idxSet = new Set<number>();
     const pairings: Array<[number, number]> = [
@@ -47,10 +53,9 @@ export const AvulsaTable: React.FC<AvulsaTableProps> = ({ teams }) => {
               <th># C.A.</th>
               <th>Squadra</th>
               <th>Girone</th>
-              <th>Punti</th>
-              <th>QuozienteSet</th>
-              <th>QuozientePunti</th>
-              <th>Diff. Punti</th>
+              <th>Quoziente Gare</th>
+              <th>Quoziente Set</th>
+              <th>Quoziente Punti</th>
             </tr>
           </thead>
           <tbody>
@@ -66,10 +71,9 @@ export const AvulsaTable: React.FC<AvulsaTableProps> = ({ teams }) => {
                     {team.girone}
                   </span>
                 </td>
-                <td><strong>{team.PuntiCampionato}</strong></td>
-                <td>{team.QuozienteSet.toFixed(3)}</td>
-                <td>{team.QuozientePunti.toFixed(3)}</td>
-                <td>{team.PuntiFatti - team.PuntiSubiti}</td>
+                <td><strong>{formatQuoziente(team.QuozienteGare)}</strong></td>
+                <td>{formatQuoziente(team.QuozienteSet)}</td>
+                <td>{formatQuoziente(team.QuozientePunti)}</td>
               </tr>
             ))}
           </tbody>
