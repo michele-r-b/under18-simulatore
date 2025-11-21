@@ -18,7 +18,7 @@ interface TeamStats {
   PuntiSubiti: number;  // punti subiti
   QuozientePunti: number;  // quoziente punti
   QuozienteGare: number;  // quoziente gare
-  caPosition?: number; // posizione in classifica avulsa
+  ClassificaAvulsa?: number; // posizione in classifica avulsa
 }
 
 interface KnockoutMatch {
@@ -77,7 +77,9 @@ function mapApiToTeamStats(rawTeam: RawTeamFromApi, girone: Girone): TeamStats {
   
   const QuozienteSet = SetPersi > 0 ? SetVinti / SetPersi : 999; // quoziente set
   const QuozientePunti = PuntiSubiti > 0 ? PuntiFatti / PuntiSubiti : 0; // quoziente punti
-  const QuozienteGare = GareGiocate > 0 ? GareVinte / GarePerse : 999; // quoziente gare
+  const QuozienteGare = PuntiCampionato / GareGiocate ; // quoziente gare
+  
+
 
   return {
     id,
@@ -361,7 +363,7 @@ const App: React.FC = () => {
     // Classifica avulsa
     const avulsaSorted = [...qualified].sort(compareTeams);
     avulsaSorted.forEach((team, idx) => {
-      team.caPosition = idx + 1;
+      team.ClassificaAvulsa = idx + 1;
     });
     
     setAvulsa(avulsaSorted);
@@ -656,7 +658,7 @@ const App: React.FC = () => {
                           </div>
                           <div className="match-teams">
                             <div className="team-line">
-                              <span className="seed">{m.home?.caPosition}°</span>
+                              <span className="seed">{m.home?.ClassificaAvulsa}°</span>
                               <span className="team">{m.home?.name}</span>
                               <span className={`girone-badge girone-${m.home?.girone}`}>
                                 {m.home?.girone}
@@ -664,7 +666,7 @@ const App: React.FC = () => {
                             </div>
                             <div className="vs">vs</div>
                             <div className="team-line">
-                              <span className="seed">{m.away?.caPosition}°</span>
+                              <span className="seed">{m.away?.ClassificaAvulsa}°</span>
                               <span className="team">{m.away?.name}</span>
                               <span className={`girone-badge girone-${m.away?.girone}`}>
                                 {m.away?.girone}
