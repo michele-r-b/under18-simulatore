@@ -330,6 +330,21 @@
   margin-top: 0.5rem;
 }
 
+/* Legend Row con bottone */
+.legend-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+  gap: 1rem;
+}
+
+.add-match-btn {
+  white-space: nowrap;
+  padding: 0.5rem 1rem;
+  font-size: 0.9rem;
+}
+
 .qualified-indicator {
   width: 20px;
   height: 20px;
@@ -678,6 +693,170 @@
 
 .step-section.active {
   animation: slideIn 0.5s ease-out;
+}
+
+/* Add Match Form */
+.add-match-section {
+  margin-top: 1rem;
+}
+
+.match-form {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 2px solid #667eea;
+}
+
+.match-form h4 {
+  color: #667eea;
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.form-select optgroup {
+  font-weight: bold;
+  color: #667eea;
+}
+
+.form-select option {
+  font-weight: normal;
+  color: #333;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-field label {
+  font-weight: 600;
+  color: #495057;
+  font-size: 0.9rem;
+}
+
+.form-select {
+  padding: 0.75rem;
+  border: 2px solid #dee2e6;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  background: white;
+  color: #333;  /* ← AGGIUNTO */
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.form-select option {
+  color: #333;  /* ← AGGIUNTO */
+  background: white;
+}
+
+.form-select optgroup {
+  color: #667eea;  /* ← AGGIUNTO */
+  font-weight: bold;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.form-select:disabled {
+  background: #e9ecef;
+  cursor: not-allowed;
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.form-note {
+  margin-top: 1rem;
+  color: #666;
+  font-size: 0.9rem;
+  text-align: center;
+  font-style: italic;
+}
+
+/* Log Section */
+.log-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.log-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.log-title {
+  color: #667eea;
+  font-size: 1rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+.clear-log-btn {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+}
+
+.log-container {
+  max-height: 250px;
+  overflow-y: auto;
+  background: white;
+  border-radius: 6px;
+  padding: 0.5rem;
+}
+
+.log-entry {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e9ecef;
+  font-size: 0.9rem;
+  color: #333;
+  transition: background-color 0.2s ease;
+}
+
+.log-entry:last-child {
+  border-bottom: none;
+}
+
+.log-entry:hover {
+  background-color: #f8f9fa;
+}
+
+/* Scrollbar per log */
+.log-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.log-container::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.log-container::-webkit-scrollbar-thumb {
+  background: #667eea;
+  border-radius: 4px;
+}
+
+.log-container::-webkit-scrollbar-thumb:hover {
+  background: #5568d3;
 }
 
 /* Print styles */

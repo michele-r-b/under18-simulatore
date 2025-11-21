@@ -208,3 +208,117 @@ export function calculateAvulsa(teams: TeamStats[]): TeamStats[] {
 
   return avulsa;
 }
+
+
+export function calculateMatchStats(
+  result: '3-0' | '3-1' | '3-2' | '0-3' | '1-3' | '2-3',
+  isHomeTeam: boolean
+): {
+  puntiCampionato: number;
+  setVinti: number;
+  setPersi: number;
+  puntiFatti: number;
+  puntiSubiti: number;
+  gareVinte: number;
+  garePerse: number;
+} {
+  const setPoints = 25;
+  const setPointsLost = 15;
+  const tieBreakWin = 15; // 5° set vincitore
+  const tieBreakLose = 10; // 5° set perdente
+
+  // Determina vincitore e perdente in base al risultato
+  let homeWins = parseInt(result[0]);
+  let awayWins = parseInt(result[2]);
+  
+  const homeIsWinner = homeWins > awayWins;
+  const isWinner = isHomeTeam ? homeIsWinner : !homeIsWinner;
+  
+  let setVinti, setPersi, puntiFatti, puntiSubiti, puntiCampionato;
+
+  if (isHomeTeam) {
+    setVinti = homeWins;
+    setPersi = awayWins;
+  } else {
+    setVinti = awayWins;
+    setPersi = homeWins;
+  }
+
+  // Calcola punti fatti/subiti
+  const totalSets = setVinti + setPersi;
+  const is5Sets = totalSets === 5;
+
+  if (is5Sets) {
+    // Match a 5 set: primi 4 set normali (25-15), 5° set tie-break (15-10)
+    if (isWinner) {
+      puntiFatti = (setPoints * 3) + tieBreakWin + (setPointsLost * setPersi);
+      puntiSubiti = (setPoints * setPersi) + tieBreakLose + (setPointsLost * 3);
+    } else {
+      puntiFatti = (setPoints * setPersi) + tieBreakLose + (setPointsLost * 3);
+      puntiSubiti = (setPoints * 3) + tieBreakWin + (setPointsLost * setPersi);
+    }
+    // Punti campionato per 3-2 o 2-3
+    puntiCampionato = isWinner ? 2 : 1;
+  } else {
+    // Match a 3 o 4 set: tutti i set normali (25-15)
+    puntiFatti = (setPoints * setVinti) + (setPointsLost * setPersi);
+    puntiSubiti = (setPoints * setPersi) + (setPointsLost * setVinti);
+    
+    // Punti campionato
+    if (setPersi === 0) {
+      // 3-0 o 0-3
+      puntiCampionato = isWinner ? 3 : 0;
+    } else {
+      // 3-1 o 1-3
+      puntiCampionato = isWinner ? 3 : 0;
+    }
+  }
+
+  return {
+    puntiCampionato,
+    setVinti,
+    setPersi,
+    puntiFatti,
+    puntiSubiti,
+    gareVinte: isWinner ? 1 : 0,
+    garePerse: isWinner ? 0 : 1,
+  };
+}
+
+/**
+ * Applica il risultato di una partita a due squadre
+ */
+export function applyMatchResult(
+  teams: TeamStats[],
+  homeTeamId: string,
+  awayTeamId: string,
+  result: '3-0' | '3-1' | '3-2' | '0-3' | '1-3' | '2-3'
+): TeamStats[] {
+  return teams.map((team) => {
+    if (team.id !== homeTeamId && team.id !== awayTeamId) {
+      return team;
+    }
+
+    const isHomeTeam = team.id === homeTeamId;
+    const stats = calculateMatchStats(result, isHomeTeam);
+
+   const updated = {
+      ...team,
+      GareGiocate: team.GareGiocate + 1,
+      GareVinte: team.GareVinte + stats.gareVinte,
+      GarePerse: team.GarePerse + stats.garePerse,
+      PuntiCampionato: team.PuntiCampionato + stats.puntiCampionato,
+      SetVinti: team.SetVinti + stats.setVinti,
+      SetPersi: team.SetPersi + stats.setPersi,
+      PuntiFatti: team.PuntiFatti + stats.puntiFatti,
+      PuntiSubiti: team.PuntiSubiti + stats.puntiSubiti,
+    };
+
+    // Ricalcola i quozienti
+    updated.QuozienteSet = updated.SetPersi > 0 ? updated.SetVinti / updated.SetPersi : 999;
+    updated.QuozientePunti = updated.PuntiSubiti > 0 ? updated.PuntiFatti / updated.PuntiSubiti : updated.PuntiFatti;
+    updated.QuozienteGare = updated.GareGiocate > 0 ? updated.PuntiCampionato / updated.GareGiocate : updated.PuntiCampionato;
+
+    return updated;
+  });
+}

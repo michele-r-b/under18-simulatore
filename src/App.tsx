@@ -19,6 +19,7 @@ import {
   recalculateQuotients,
   calculateAvulsa,
   generateBracket,
+  applyMatchResult,
 } from './utils';
 
 // Components
@@ -33,6 +34,7 @@ import {
 const App: React.FC = () => {
   // State
   const [teams, setTeams] = useState<TeamStats[]>([]);
+  const [originalTeams, setOriginalTeams] = useState<TeamStats[]>([]); 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [avulsa, setAvulsa] = useState<TeamStats[]>([]);
@@ -52,6 +54,7 @@ const App: React.FC = () => {
       }
 
       setTeams(loadedTeams);
+      setOriginalTeams(loadedTeams);  // ← AGGIUNTO: salva l'originale
       setAvulsa([]);
       setMatches([]);
       setCurrentStep(2);
@@ -81,6 +84,30 @@ const App: React.FC = () => {
         return recalculateQuotients(t, field, value);
       })
     );
+  };
+
+const handleAddMatch = (
+    girone: string,
+    homeTeamId: string,
+    awayTeamId: string,
+    result: '3-0' | '3-1' | '3-2' | '0-3' | '1-3' | '2-3'
+  ) => {
+    setTeams((prev) => applyMatchResult(prev, homeTeamId, awayTeamId, result));
+  };
+
+  const handleResetGirone = (girone: Girone) => {
+    setTeams((prev) => {
+      // Filtra le squadre del girone da ripristinare
+      const originalGironeTeams = originalTeams.filter((t) => t.girone === girone);
+      // Mantieni le altre squadre, sostituisci quelle del girone
+      return prev.map((team) => {
+        if (team.girone === girone) {
+          const original = originalGironeTeams.find((t) => t.id === team.id);
+          return original || team;
+        }
+        return team;
+      });
+    });
   };
 
   const handleComputeAvulsaAndBracket = () => {
@@ -208,10 +235,12 @@ const handleSelectWinner = (matchId: string, winnerId: string) => {
       />
 
       {/* Step 2: Modifica Dati */}
-      <Step2EditData
+    <Step2EditData
         teams={teams}
         teamsByGirone={teamsByGirone}
         onUpdateField={handleUpdateTeamField}
+        onAddMatch={handleAddMatch}
+        onResetGirone={handleResetGirone}
         onComputeAvulsa={handleComputeAvulsaAndBracket}
         isActive={currentStep >= 2}
       />

@@ -10,6 +10,8 @@ interface Step2Props {
   teams: TeamStats[];
   teamsByGirone: Record<Girone, TeamStats[]>;
   onUpdateField: (teamId: string, field: keyof TeamStats, value: number) => void;
+  onAddMatch: (girone: string, homeTeamId: string, awayTeamId: string, result: '3-0' | '3-1' | '3-2' | '0-3' | '1-3' | '2-3') => void;
+  onResetGirone: (girone: Girone) => void;  // ← AGGIUNTO
   onComputeAvulsa: () => void;
   isActive: boolean;
 }
@@ -18,6 +20,8 @@ export const Step2EditData: React.FC<Step2Props> = ({
   teams,
   teamsByGirone,
   onUpdateField,
+  onAddMatch,
+  onResetGirone,
   onComputeAvulsa,
   isActive,
 }) => {
@@ -38,12 +42,14 @@ export const Step2EditData: React.FC<Step2Props> = ({
           I quozienti (QuozienteSet, QuozientePunti, QuozienteGare) vengono ricalcolati automaticamente.
         </p>
 
-        {gironi.map((girone) => (
+       {gironi.map((girone) => (
           <GironeTable
             key={girone}
             girone={girone}
             teams={teamsByGirone[girone]}
             onUpdateField={onUpdateField}
+            onAddMatch={onAddMatch}
+            onResetGirone={onResetGirone}
           />
         ))}
 

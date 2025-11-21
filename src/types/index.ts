@@ -72,3 +72,15 @@ export interface AppState {
   matches: KnockoutMatch[];
   currentStep: AppStep;
 }
+
+export type MatchResult = '3-0' | '3-1' | '3-2' | '0-3' | '1-3' | '2-3';
+
+export interface AddMatchForm {
+  homeTeamId: string;
+  awayTeamId: string;
+  result: MatchResult;
+}
+
+export interface LogEntry {
+  message: string;
+}
