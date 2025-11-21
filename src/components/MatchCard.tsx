@@ -30,20 +30,25 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, className = '', onS
       <div className="match-teams">
         {match.home && match.away ? (
           <>
+            {onSelectWinner && match.round !== 'F' && match.round !== '3P' && (
+              <div className="match-instruction">
+                👇 Seleziona la squadra vincente
+              </div>
+            )}
             <div className="team-line">
               <span className="seed">{match.home.caPosition}°</span>
               <span className="team">{match.home.name}</span>
               <span className={`girone-badge girone-${match.home.girone}`}>
                 {match.home.girone}
               </span>
-              {/* Bottone selezione per QF e SF */}
+            {/* Bottone selezione per QF e SF */}
               {onSelectWinner && match.round !== 'F' && match.round !== '3P' && (
                 <button
                   className={`winner-checkbox ${match.winnerId === match.home.id ? 'selected' : ''}`}
                   onClick={() => onSelectWinner(match.id, match.home!.id)}
                   title="Seleziona vincitore"
                 >
-                  {match.winnerId === match.home.id ? '✅' : '⭕'}
+                  {match.winnerId === match.home.id ? '🏆' : ''}
                 </button>
               )}
             </div>
@@ -54,14 +59,14 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, className = '', onS
               <span className={`girone-badge girone-${match.away.girone}`}>
                 {match.away.girone}
               </span>
-              {/* Bottone selezione per QF e SF */}
+             {/* Bottone selezione per QF e SF */}
               {onSelectWinner && match.round !== 'F' && match.round !== '3P' && (
                 <button
                   className={`winner-checkbox ${match.winnerId === match.away.id ? 'selected' : ''}`}
                   onClick={() => onSelectWinner(match.id, match.away!.id)}
                   title="Seleziona vincitore"
                 >
-                  {match.winnerId === match.away.id ? '✅' : '⭕'}
+                  {match.winnerId === match.away.id ? '🏆' : ''}
                 </button>
               )}
             </div>
@@ -75,23 +80,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, className = '', onS
         )}
       </div>
 
-      {/* Bottoni selezione vincitore (solo QF e SF) */}
-      {match.home && match.away && onSelectWinner && match.round !== 'F' && match.round !== '3P' && (
-        <div className="winner-selection">
-          <button
-            className={`winner-btn ${match.winnerId === match.home.id ? 'selected' : ''}`}
-            onClick={() => onSelectWinner(match.id, match.home!.id)}
-          >
-            {match.winnerId === match.home.id ? '✅' : '⭕'} {match.home.name} vince
-          </button>
-          <button
-            className={`winner-btn ${match.winnerId === match.away.id ? 'selected' : ''}`}
-            onClick={() => onSelectWinner(match.id, match.away!.id)}
-          >
-            {match.winnerId === match.away.id ? '✅' : '⭕'} {match.away.name} vince
-          </button>
-        </div>
-      )}
+      
       
       {match.round === '3P' && (
         <p className="match-note">
