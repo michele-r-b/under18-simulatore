@@ -293,23 +293,32 @@
 
 .data-input {
   width: 70px;
-  padding: 0.4rem;
-  border: 1px solid #ced4da;
-  border-radius: 4px;
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
   font-size: 0.9rem;
   text-align: center;
-  transition: border-color 0.2s ease;
+  transition: all 0.2s ease;
+  background-color: #ffffff;  /* ← BIANCO! */
+  color: #1f2937;
+}
+
+.data-input:hover:not(:disabled) {
+  border-color: #3b82f6;
+  background-color: #f0f9ff;
 }
 
 .data-input:focus {
   outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
 .data-input:disabled {
-  background-color: #e9ecef;
+  background-color: #f3f4f6;
+  color: #6b7280;
   cursor: not-allowed;
+  font-weight: 500;
 }
 
 .legend {
@@ -415,6 +424,19 @@
 .girone-D {
   background-color: #fff3e0;
   color: #e65100;
+}
+
+.conflict-row {
+  background-color: #ffecec;
+}
+
+.conflict-row:hover {
+  background-color: #ffdede !important;
+}
+
+.conflict-row .position-cell,
+.conflict-row .team-name-cell {
+  color: #c53030;
 }
 
 /* Bracket Section */
