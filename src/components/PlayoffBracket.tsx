@@ -9,9 +9,10 @@ import { WarningMessage } from './Messages';
 
 interface BracketProps {
   matches: KnockoutMatch[];
+  onSelectWinner: (matchId: string, winnerId: string) => void;
 }
 
-export const PlayoffBracket: React.FC<BracketProps> = ({ matches }) => {
+export const PlayoffBracket: React.FC<BracketProps> = ({ matches, onSelectWinner }) => {
   const qfMatches = matches.filter((m) => m.round === 'QF');
   const sfMatches = matches.filter((m) => m.round === 'SF');
   const finalMatches = matches.filter((m) => m.round === 'F' || m.round === '3P');
@@ -26,9 +27,9 @@ export const PlayoffBracket: React.FC<BracketProps> = ({ matches }) => {
         <h4 className="round-title">Quarti di Finale</h4>
         <p className="round-date">📅 Sabato 7 o Domenica 8 Marzo 2026</p>
 
-        <div className="matches-grid">
-          {qfMatches.map((match) => (
-            <MatchCard key={match.id} match={match} />
+        <div className="matches-grid quarti">
+        {qfMatches.map((match) => (
+            <MatchCard key={match.id} match={match} onSelectWinner={onSelectWinner} />
           ))}
         </div>
 
@@ -51,12 +52,14 @@ export const PlayoffBracket: React.FC<BracketProps> = ({ matches }) => {
               ...sfMatches[0],
               label: 'Semifinale 1',
             }}
+            onSelectWinner={onSelectWinner}
           />
           <MatchCard
             match={{
               ...sfMatches[1],
               label: 'Semifinale 2',
             }}
+            onSelectWinner={onSelectWinner}
           />
         </div>
 
@@ -73,10 +76,12 @@ export const PlayoffBracket: React.FC<BracketProps> = ({ matches }) => {
           <MatchCard
             match={finalMatches.find((m) => m.round === 'F')!}
             className="final"
+            onSelectWinner={onSelectWinner}
           />
           <MatchCard
             match={finalMatches.find((m) => m.round === '3P')!}
             className="bronze"
+            onSelectWinner={onSelectWinner}
           />
         </div>
       </div>

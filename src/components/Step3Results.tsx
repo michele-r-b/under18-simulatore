@@ -10,10 +10,11 @@ import { PlayoffBracket } from './PlayoffBracket';
 interface Step3Props {
   avulsa: TeamStats[];
   matches: KnockoutMatch[];
+  onSelectWinner: (matchId: string, winnerId: string) => void;
   isActive: boolean;
 }
 
-export const Step3Results: React.FC<Step3Props> = ({ avulsa, matches, isActive }) => {
+export const Step3Results: React.FC<Step3Props> = ({ avulsa, matches, onSelectWinner, isActive }) => {
   if (avulsa.length === 0) return null;
 
   return (
@@ -28,7 +29,7 @@ export const Step3Results: React.FC<Step3Props> = ({ avulsa, matches, isActive }
         <AvulsaTable teams={avulsa} />
 
         {/* Tabellone Playoff */}
-        {matches.length > 0 && <PlayoffBracket matches={matches} />}
+        {matches.length > 0 && <PlayoffBracket matches={matches} onSelectWinner={onSelectWinner} />}
       </div>
     </section>
   );

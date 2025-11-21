@@ -630,7 +630,17 @@
   .matches-grid {
     grid-template-columns: 1fr;
   }
+/* Layout 2x2 SOLO per i Quarti di Finale */
+.matches-grid.quarti {
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: 1.5rem;
+}
 
+@media (max-width: 768px) {
+  .matches-grid.quarti {
+    grid-template-columns: 1fr !important;
+  }
+}
   .data-input {
     width: 60px;
     padding: 0.3rem;
@@ -678,6 +688,45 @@
   }
 }
 
+/* Winner Selection Buttons */
+.winner-selection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e9ecef;
+}
+
+.winner-btn {
+  padding: 0.75rem 1rem;
+  border: 2px solid #dee2e6;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.winner-btn:hover {
+  border-color: #667eea;
+  background-color: #f8f9ff;
+  transform: translateX(4px);
+}
+
+.winner-btn.selected {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: #667eea;
+  font-weight: 600;
+}
+
+.winner-btn.selected:hover {
+  transform: translateX(0);
+}
+
 /* Animazioni */
 @keyframes slideIn {
   from {
@@ -713,5 +762,53 @@
 
   .match-card {
     page-break-inside: avoid;
+  }
+}
+
+/* Winner Selection - Checkbox inline */
+.winner-checkbox {
+  margin-left: auto;
+  padding: 0.5rem;
+  min-width: 40px;
+  height: 40px;
+  border: 2px solid #dee2e6;
+  border-radius: 6px;
+  background: white;
+  cursor: pointer;
+  font-size: 1.2rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.winner-checkbox:hover {
+  border-color: #667eea;
+  background-color: #f8f9ff;
+  transform: scale(1.1);
+}
+
+.winner-checkbox.selected {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-color: #667eea;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.winner-checkbox.selected:hover {
+  transform: scale(1.05);
+}
+
+/* Layout 2x2 per i Quarti di Finale */
+.round-section:has(.matches-grid > .match-card:first-child[class*="QF"]) .matches-grid {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+/* Responsive - mantieni verticale anche su mobile */
+@media (max-width: 768px) {
+  .winner-checkbox {
+    min-width: 35px;
+    height: 35px;
+    font-size: 1rem;
+    padding: 0.25rem;
   }
 }
