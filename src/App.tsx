@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './App.css';
 
 type Girone = 'A' | 'B' | 'C' | 'D';
 
@@ -16,6 +17,7 @@ interface TeamStats {
   PF: number;  // punti fatti
   PS: number;  // punti subiti
   QP: number;  // quoziente punti
+  caPosition?: number; // posizione in classifica avulsa
 }
 
 interface KnockoutMatch {
@@ -25,7 +27,8 @@ interface KnockoutMatch {
   home: TeamStats | null;
   away: TeamStats | null;
   winnerId?: string;
-  conflict?: boolean; // quarti con squadre stesso girone
+  conflict?: boolean;
+  date?: string;
 }
 
 const SID_TO_GIRONE: Record<number, Girone> = {
@@ -35,34 +38,64 @@ const SID_TO_GIRONE: Record<number, Girone> = {
   318: 'D',
 };
 
+const GIRONE_NAMES: Record<Girone, string> = {
+  'A': 'Girone A',
+  'B': 'Girone B',
+  'C': 'Girone C',
+  'D': 'Girone D',
+};
+
 const SIDS = [315, 316, 317, 318];
-// PRIMA
-// const CLASSIFICA_URL = (sid: number) =>
-//   `https://srv6.matchshare.it/stats_test/rest_api/fm_classifica?sid=${sid}&client_name=fipavbergamo`;
 
-// DOPO: usiamo un path "locale" che poi proxyamo verso l'endpoint corretto "ranks2"
-// NOTE: da Network risulta che il backend usa /ranks2?client_name=...&season_id=...
-const CLASSIFICA_URL = (sid: number) =>
-  `/matchshare/stats_test/rest_api/ranks2?client_name=fipavbergamo&season_id=${sid}`;
+// Prova entrambi gli endpoint
+const CLASSIFICA_URLS = (sid: number) => [
+  `/matchshare/stats_test/rest_api/ranks2?client_name=fipavbergamo&season_id=${sid}`,
+  `/matchshare/stats_test/rest_api/fm_classifica?sid=${sid}&client_name=fipavbergamo`
+];
 
-// TODO: tipo reale in base al JSON
 type RawTeamFromApi = any;
 
-// ⚠️ ADATTA QUESTO MAPPING AI CAMPI REALI DELLA RISPOSTA
 function mapApiToTeamStats(rawTeam: RawTeamFromApi, girone: Girone): TeamStats {
+  // Prova diversi possibili nomi di campo dall'API
+  const id = String(
+    rawTeam.id_squadra ?? 
+    rawTeam.squadra_id ?? 
+    rawTeam.team_id ?? 
+    rawTeam.id ?? 
+    `${girone}-${rawTeam.nome ?? rawTeam.nome_squadra ?? Math.random()}`
+  );
+  
+  const name = String(
+    rawTeam.nome_squadra ?? 
+    rawTeam.nome ?? 
+    rawTeam.team_name ?? 
+    rawTeam.squadra ?? 
+    'SQUADRA'
+  );
+
+  // Calcola QS e QP se non presenti
+  const SV = Number(rawTeam.set_vinti ?? rawTeam.SV ?? 0);
+  const SP = Number(rawTeam.set_persi ?? rawTeam.SP ?? 0);
+  const PF = Number(rawTeam.punti_fatti ?? rawTeam.PF ?? 0);
+  const PS = Number(rawTeam.punti_subiti ?? rawTeam.PS ?? 0);
+  
+  const QS = SP > 0 ? SV / SP : SV;
+  const QP = PS > 0 ? PF / PS : PF;
+
   return {
-    id: String(rawTeam.id_squadra ?? rawTeam.id ?? `${girone}-${rawTeam.nome}`),
-    name: rawTeam.nome_squadra ?? rawTeam.nome ?? 'SQUADRA',
+    id,
+    name,
+    girone,
     P: Number(rawTeam.punti ?? rawTeam.P ?? 0),
-    G: Number(rawTeam.giocate ?? rawTeam.G ?? 0),
-    V: Number(rawTeam.vinte ?? rawTeam.V ?? 0),
-    Pe: Number(rawTeam.perse ?? rawTeam.Pe ?? 0),
-    SV: Number(rawTeam.set_vinti ?? rawTeam.SV ?? 0),
-    SP: Number(rawTeam.set_persi ?? rawTeam.SP ?? 0),
-    QS: Number(rawTeam.quoziente_set ?? rawTeam.QS ?? 0),
-    PF: Number(rawTeam.punti_fatti ?? rawTeam.PF ?? 0),
-    PS: Number(rawTeam.punti_subiti ?? rawTeam.PS ?? 0),
-    QP: Number(rawTeam.quoziente_punti ?? rawTeam.QP ?? 0),
+    G: Number(rawTeam.giocate ?? rawTeam.G ?? rawTeam.partite ?? 0),
+    V: Number(rawTeam.vinte ?? rawTeam.V ?? rawTeam.vittorie ?? 0),
+    Pe: Number(rawTeam.perse ?? rawTeam.Pe ?? rawTeam.sconfitte ?? 0),
+    SV,
+    SP,
+    QS: Number(rawTeam.quoziente_set ?? rawTeam.QS ?? QS),
+    PF,
+    PS,
+    QP: Number(rawTeam.quoziente_punti ?? rawTeam.QP ?? QP),
   };
 }
 
@@ -70,9 +103,9 @@ function compareTeams(a: TeamStats, b: TeamStats): number {
   // 1) Punti
   if (b.P !== a.P) return b.P - a.P;
   // 2) Quoziente set
-  if (b.QS !== a.QS) return b.QS - a.QS;
+  if (Math.abs(b.QS - a.QS) > 0.001) return b.QS - a.QS;
   // 3) Quoziente punti
-  if (b.QP !== a.QP) return b.QP - a.QP;
+  if (Math.abs(b.QP - a.QP) > 0.001) return b.QP - a.QP;
   // 4) differenza punti
   const diffA = a.PF - a.PS;
   const diffB = b.PF - b.PS;
@@ -81,12 +114,42 @@ function compareTeams(a: TeamStats, b: TeamStats): number {
   return a.name.localeCompare(b.name);
 }
 
+// Funzione per verificare se due squadre possono incontrarsi ai quarti
+function canMeetInQF(team1: TeamStats, team2: TeamStats): boolean {
+  return team1.girone !== team2.girone;
+}
+
+// Funzione per trovare accoppiamenti validi per i quarti
+function findValidQFPairings(rankedTeams: TeamStats[]): KnockoutMatch[] | null {
+  if (rankedTeams.length !== 8) return null;
+
+  // Accoppiamento standard: 1-8, 2-7, 3-6, 4-5
+  const standardPairings = [
+    { home: rankedTeams[0], away: rankedTeams[7], label: 'QF1' },
+    { home: rankedTeams[1], away: rankedTeams[6], label: 'QF2' },
+    { home: rankedTeams[2], away: rankedTeams[5], label: 'QF3' },
+    { home: rankedTeams[3], away: rankedTeams[4], label: 'QF4' },
+  ];
+
+  // Verifica conflitti
+  return standardPairings.map((p, i) => ({
+    id: p.label,
+    round: 'QF' as const,
+    label: `Quarto di Finale ${i + 1}`,
+    home: p.home,
+    away: p.away,
+    conflict: !canMeetInQF(p.home, p.away),
+    date: 'Sabato 7 o Domenica 8 Marzo 2026'
+  }));
+}
+
 const App: React.FC = () => {
   const [teams, setTeams] = useState<TeamStats[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [avulsa, setAvulsa] = useState<TeamStats[]>([]);
   const [matches, setMatches] = useState<KnockoutMatch[]>([]);
+  const [currentStep, setCurrentStep] = useState<1 | 2 | 3>(1);
 
   const handleLoadData = async () => {
     setLoading(true);
@@ -95,44 +158,68 @@ const App: React.FC = () => {
       const allTeams: TeamStats[] = [];
 
       for (const sid of SIDS) {
-        const url = CLASSIFICA_URL(sid);
-        console.log('Fetching URL:', url);
+        const urls = CLASSIFICA_URLS(sid);
+        let success = false;
+        let lastError = '';
 
-        const res = await fetch(url);
+        // Prova entrambi gli endpoint
+        for (const url of urls) {
+          try {
+            console.log('Fetching URL:', url);
+            const res = await fetch(url);
+            const text = await res.text();
+            console.log(`Risposta per sid ${sid}:`, text.substring(0, 200));
 
-        // leggiamo SEMPRE il testo grezzo, così possiamo vedere esattamente cosa risponde il server
-        const text = await res.text();
-        console.log(`Risposta grezza per sid ${sid}:`, text);
+            if (!res.ok) {
+              lastError = `HTTP ${res.status}`;
+              continue;
+            }
 
-        if (!res.ok) {
-          // qui vedremo sia lo status che il body del server
-          throw new Error(`HTTP ${res.status} per sid ${sid} – body: ${text}`);
+            let json: any;
+            try {
+              json = JSON.parse(text);
+            } catch (parseErr) {
+              lastError = 'Risposta non JSON valida';
+              continue;
+            }
+
+            // Gestisci diverse strutture JSON
+            const rawTeams: RawTeamFromApi[] = Array.isArray(json)
+              ? json
+              : json.data ?? json.result ?? json.classifica ?? [];
+
+            if (rawTeams.length === 0) {
+              lastError = 'Nessuna squadra trovata';
+              continue;
+            }
+
+            const girone = SID_TO_GIRONE[sid];
+            rawTeams.forEach((rt) => {
+              allTeams.push(mapApiToTeamStats(rt, girone));
+            });
+
+            success = true;
+            break;
+          } catch (e: any) {
+            lastError = e.message;
+            console.error(`Errore con URL ${url}:`, e);
+          }
         }
 
-        let json: any;
-        try {
-          json = JSON.parse(text);
-        } catch (parseErr: any) {
-          // il server non sta rispondendo JSON valido
-          throw new Error(
-            `Risposta non JSON valida per sid ${sid}: ${text}`
-          );
+        if (!success) {
+          throw new Error(`Impossibile caricare dati per girone ${SID_TO_GIRONE[sid]}: ${lastError}`);
         }
+      }
 
-        // qui devi capire come è strutturato il JSON (array diretto, json.data, ecc.)
-        const rawTeams: RawTeamFromApi[] = Array.isArray(json)
-          ? json
-          : json.data ?? json.result ?? [];
-
-        const girone = SID_TO_GIRONE[sid];
-        rawTeams.forEach((rt) => {
-          allTeams.push(mapApiToTeamStats(rt, girone));
-        });
+      if (allTeams.length === 0) {
+        throw new Error('Nessuna squadra caricata da nessun girone');
       }
 
       setTeams(allTeams);
       setAvulsa([]);
       setMatches([]);
+      setCurrentStep(2);
+      setError(null);
     } catch (e: any) {
       console.error('Errore nel caricamento:', e);
       setError(e.message ?? 'Errore nel caricamento dei dati');
@@ -147,19 +234,29 @@ const App: React.FC = () => {
     value: number
   ) => {
     setTeams((prev) =>
-      prev.map((t) =>
-        t.id === id
-          ? {
-              ...t,
-              [field]: value,
-            }
-          : t
-      )
+      prev.map((t) => {
+        if (t.id !== id) return t;
+        
+        const updated = { ...t, [field]: value };
+        
+        // Ricalcola QS e QP quando cambiano i valori correlati
+        if (field === 'SV' || field === 'SP') {
+          updated.QS = updated.SP > 0 ? updated.SV / updated.SP : updated.SV;
+        }
+        if (field === 'PF' || field === 'PS') {
+          updated.QP = updated.PS > 0 ? updated.PF / updated.PS : updated.PF;
+        }
+        
+        return updated;
+      })
     );
   };
 
   const computeAvulsaAndBracket = () => {
-    if (teams.length === 0) return;
+    if (teams.length === 0) {
+      setError('Nessuna squadra caricata');
+      return;
+    }
 
     const byGirone: Record<Girone, TeamStats[]> = {
       A: [],
@@ -172,70 +269,51 @@ const App: React.FC = () => {
       byGirone[t.girone].push(t);
     });
 
-    // prime 2 per girone
+    // Prime 2 per girone
     const qualified: TeamStats[] = [];
     (['A', 'B', 'C', 'D'] as Girone[]).forEach((g) => {
       const sorted = [...byGirone[g]].sort(compareTeams);
       qualified.push(...sorted.slice(0, 2));
     });
 
+    // Classifica avulsa
     const avulsaSorted = [...qualified].sort(compareTeams);
+    avulsaSorted.forEach((team, idx) => {
+      team.caPosition = idx + 1;
+    });
+    
     setAvulsa(avulsaSorted);
 
     if (avulsaSorted.length !== 8) {
+      setError('Numero di squadre qualificate non valido');
       setMatches([]);
       return;
     }
 
-    const qf: KnockoutMatch[] = [
-      {
-        id: 'QF1',
-        round: 'QF',
-        label: 'Quarto di Finale 1 (1C.A. - 8C.A.)',
-        home: avulsaSorted[0],
-        away: avulsaSorted[7],
-      },
-      {
-        id: 'QF2',
-        round: 'QF',
-        label: 'Quarto di Finale 2 (2C.A. - 7C.A.)',
-        home: avulsaSorted[1],
-        away: avulsaSorted[6],
-      },
-      {
-        id: 'QF3',
-        round: 'QF',
-        label: 'Quarto di Finale 3 (3C.A. - 6C.A.)',
-        home: avulsaSorted[2],
-        away: avulsaSorted[5],
-      },
-      {
-        id: 'QF4',
-        round: 'QF',
-        label: 'Quarto di Finale 4 (4C.A. - 5C.A.)',
-        home: avulsaSorted[3],
-        away: avulsaSorted[4],
-      },
-    ].map((m) => ({
-      ...m,
-      conflict:
-        m.home?.girone && m.away?.girone && m.home.girone === m.away.girone,
-    }));
+    // Genera accoppiamenti quarti
+    const qf = findValidQFPairings(avulsaSorted);
+    if (!qf) {
+      setError('Impossibile generare gli accoppiamenti');
+      return;
+    }
 
+    // Genera struttura semifinali e finali
     const sf: KnockoutMatch[] = [
       {
         id: 'SF1',
         round: 'SF',
-        label: 'Semifinale 1 (vinc. QF1 - vinc. QF4)',
+        label: 'Semifinale 1',
         home: null,
         away: null,
+        date: 'Sabato 14 o Domenica 15 Marzo 2026'
       },
       {
         id: 'SF2',
         round: 'SF',
-        label: 'Semifinale 2 (vinc. QF2 - vinc. QF3)',
+        label: 'Semifinale 2',
         home: null,
         away: null,
+        date: 'Sabato 14 o Domenica 15 Marzo 2026'
       },
     ];
 
@@ -246,6 +324,7 @@ const App: React.FC = () => {
         label: 'Finale 1°-2° posto',
         home: null,
         away: null,
+        date: 'Domenica 22 Marzo 2026'
       },
       {
         id: 'F3P',
@@ -253,10 +332,13 @@ const App: React.FC = () => {
         label: 'Finale 3°-4° posto',
         home: null,
         away: null,
+        date: 'Sabato 21 o Domenica 22 Marzo 2026'
       },
     ];
 
     setMatches([...qf, ...sf, ...finals]);
+    setCurrentStep(3);
+    setError(null);
   };
 
   const gironi: Girone[] = ['A', 'B', 'C', 'D'];
@@ -270,39 +352,69 @@ const App: React.FC = () => {
   );
 
   return (
-    <div style={{ padding: '1rem', fontFamily: 'system-ui' }}>
-      <h1>Under 18 Femminile - Simulatore Fasi Finali</h1>
+    <div className="app-container">
+      <header className="app-header">
+        <h1>🏐 Simulatore Fasi Finali Under 18 Femminile</h1>
+        <p className="subtitle">FIPAV Bergamo - Campionato 2025/2026</p>
+      </header>
 
-      <section style={{ marginBottom: '1.5rem' }}>
-        <h2>1. Recupero dati</h2>
-        <button onClick={handleLoadData} disabled={loading}>
-          {loading ? 'Caricamento...' : 'Carica classifiche Under 18'}
-        </button>
-        {error && <p style={{ color: 'red' }}>Errore: {error}</p>}
+      {/* STEP 1: Caricamento Dati */}
+      <section className={`card step-section ${currentStep >= 1 ? 'active' : ''}`}>
+        <div className="step-header">
+          <span className="step-number">1</span>
+          <h2>Recupero Dati dalle Classifiche</h2>
+        </div>
+        
+        <div className="step-content">
+          <p className="info-text">
+            Carica i dati attuali delle classifiche dei 4 gironi (A, B, C, D) dal sistema MatchShare.
+          </p>
+          
+          <button 
+            onClick={handleLoadData} 
+            disabled={loading}
+            className="primary-button"
+          >
+            {loading ? '⏳ Caricamento in corso...' : '📥 Carica Classifiche'}
+          </button>
+          
+          {error && (
+            <div className="error-message">
+              <strong>⚠️ Errore:</strong> {error}
+            </div>
+          )}
+          
+          {teams.length > 0 && (
+            <div className="success-message">
+              ✅ Caricate {teams.length} squadre da {SIDS.length} gironi
+            </div>
+          )}
+        </div>
       </section>
 
+      {/* STEP 2: Modifica Dati */}
       {teams.length > 0 && (
-        <>
-          <section style={{ marginBottom: '1.5rem' }}>
-            <h2>2. Modifica dati di classifica</h2>
-            <p>
-              Modifica i valori (P, G, V, Pe, SV, SP, QS, PF, PS, QP) per
-              simulare scenari diversi.
+        <section className={`card step-section ${currentStep >= 2 ? 'active' : ''}`}>
+          <div className="step-header">
+            <span className="step-number">2</span>
+            <h2>Modifica Dati e Simulazione Scenari</h2>
+          </div>
+          
+          <div className="step-content">
+            <p className="info-text">
+              Modifica i valori per simulare diversi scenari di fine campionato.
+              I quozienti (QS, QP) vengono ricalcolati automaticamente.
             </p>
 
             {gironi.map((g) => (
-              <div key={g} style={{ marginBottom: '1rem' }}>
-                <h3>Girone {g}</h3>
-                <div style={{ overflowX: 'auto' }}>
-                  <table
-                    style={{
-                      borderCollapse: 'collapse',
-                      minWidth: '800px',
-                    }}
-                  >
+              <div key={g} className="girone-section">
+                <h3 className="girone-title">{GIRONE_NAMES[g]}</h3>
+                <div className="table-container">
+                  <table className="data-table">
                     <thead>
                       <tr>
-                        <th>Squadra</th>
+                        <th className="sticky-col">Pos</th>
+                        <th className="sticky-col">Squadra</th>
                         <th>P</th>
                         <th>G</th>
                         <th>V</th>
@@ -316,9 +428,10 @@ const App: React.FC = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {teamsByGirone[g].map((t) => (
-                        <tr key={t.id}>
-                          <td>{t.name}</td>
+                      {teamsByGirone[g].map((t, idx) => (
+                        <tr key={t.id} className={idx < 2 ? 'qualified-row' : ''}>
+                          <td className="sticky-col pos-col">{idx + 1}</td>
+                          <td className="sticky-col team-name">{t.name}</td>
                           {(
                             [
                               'P',
@@ -336,8 +449,9 @@ const App: React.FC = () => {
                             <td key={field}>
                               <input
                                 type="number"
-                                value={t[field]}
-                                style={{ width: '4rem' }}
+                                value={field === 'QS' || field === 'QP' ? t[field].toFixed(3) : t[field]}
+                                className="data-input"
+                                step={field === 'QS' || field === 'QP' ? '0.001' : '1'}
                                 onChange={(e) =>
                                   handleUpdateTeamField(
                                     t.id,
@@ -345,6 +459,7 @@ const App: React.FC = () => {
                                     Number(e.target.value)
                                   )
                                 }
+                                disabled={field === 'QS' || field === 'QP'}
                               />
                             </td>
                           ))}
@@ -353,86 +468,198 @@ const App: React.FC = () => {
                     </tbody>
                   </table>
                 </div>
+                <p className="legend">
+                  <span className="qualified-indicator"></span> Prime 2 posizioni = qualificate
+                </p>
               </div>
             ))}
-          </section>
 
-          <section style={{ marginBottom: '1.5rem' }}>
-            <h2>3. Classifica avulsa & tabellone</h2>
-            <button onClick={computeAvulsaAndBracket}>
-              Calcola classifica avulsa e genera tabellone
+            <button onClick={computeAvulsaAndBracket} className="primary-button">
+              🔄 Calcola Classifica Avulsa e Tabellone
             </button>
+          </div>
+        </section>
+      )}
 
-            {avulsa.length === 8 && (
-              <div style={{ marginTop: '1rem' }}>
-                <h3>Classifica Avulsa (prime 2 per girone)</h3>
-                <table
-                  style={{
-                    borderCollapse: 'collapse',
-                    minWidth: '600px',
-                  }}
-                >
+      {/* STEP 3: Risultati */}
+      {avulsa.length === 8 && (
+        <section className={`card step-section ${currentStep >= 3 ? 'active' : ''}`}>
+          <div className="step-header">
+            <span className="step-number">3</span>
+            <h2>Classifica Avulsa e Tabellone Playoff</h2>
+          </div>
+          
+          <div className="step-content">
+            {/* Classifica Avulsa */}
+            <div className="avulsa-section">
+              <h3>📊 Classifica Avulsa (Prime 2 per Girone)</h3>
+              <div className="table-container">
+                <table className="avulsa-table">
                   <thead>
                     <tr>
-                      <th>Pos</th>
+                      <th>Pos C.A.</th>
                       <th>Squadra</th>
                       <th>Girone</th>
-                      <th>P</th>
+                      <th>Punti</th>
                       <th>QS</th>
                       <th>QP</th>
+                      <th>Diff. Punti</th>
                     </tr>
                   </thead>
                   <tbody>
                     {avulsa.map((t, idx) => (
                       <tr key={t.id}>
-                        <td>{idx + 1}</td>
-                        <td>{t.name}</td>
-                        <td>{t.girone}</td>
-                        <td>{t.P}</td>
+                        <td className="position-cell">{idx + 1}°</td>
+                        <td className="team-name-cell">{t.name}</td>
+                        <td>
+                          <span className={`girone-badge girone-${t.girone}`}>
+                            {t.girone}
+                          </span>
+                        </td>
+                        <td><strong>{t.P}</strong></td>
                         <td>{t.QS.toFixed(3)}</td>
                         <td>{t.QP.toFixed(3)}</td>
+                        <td>{t.PF - t.PS}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
-            )}
+            </div>
 
+            {/* Tabellone */}
             {matches.length > 0 && (
-              <div style={{ marginTop: '1.5rem' }}>
-                <h3>Tabellone</h3>
+              <div className="bracket-section">
+                <h3>🏆 Tabellone Playoff</h3>
 
-                <h4>Quarti di Finale</h4>
-                <ul>
-                  {matches
-                    .filter((m) => m.round === 'QF')
-                    .map((m) => (
-                      <li key={m.id}>
-                        <strong>{m.label}</strong>
-                        {': '}
-                        {m.home?.name} ({m.home?.girone}) vs{' '}
-                        {m.away?.name} ({m.away?.girone}){' '}
-                        {m.conflict && (
-                          <span style={{ color: 'red', marginLeft: '0.5rem' }}>
-                            ⚠ stesso girone, accoppiamento da rivedere
-                          </span>
-                        )}
-                      </li>
-                    ))}
-                </ul>
+                {/* Quarti di Finale */}
+                <div className="round-section">
+                  <h4 className="round-title">Quarti di Finale</h4>
+                  <p className="round-date">📅 Sabato 7 o Domenica 8 Marzo 2026</p>
+                  
+                  <div className="matches-grid">
+                    {matches
+                      .filter((m) => m.round === 'QF')
+                      .map((m) => (
+                        <div key={m.id} className={`match-card ${m.conflict ? 'conflict' : ''}`}>
+                          <div className="match-header">
+                            {m.label}
+                            {m.conflict && (
+                              <span className="warning-badge">⚠️ Stesso Girone</span>
+                            )}
+                          </div>
+                          <div className="match-teams">
+                            <div className="team-line">
+                              <span className="seed">{m.home?.caPosition}°</span>
+                              <span className="team">{m.home?.name}</span>
+                              <span className={`girone-badge girone-${m.home?.girone}`}>
+                                {m.home?.girone}
+                              </span>
+                            </div>
+                            <div className="vs">vs</div>
+                            <div className="team-line">
+                              <span className="seed">{m.away?.caPosition}°</span>
+                              <span className="team">{m.away?.name}</span>
+                              <span className={`girone-badge girone-${m.away?.girone}`}>
+                                {m.away?.girone}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                  </div>
 
-                <h4>Semifinali e Finali</h4>
-                <ul>
-                  <li>SF1: vincente QF1 – vincente QF4</li>
-                  <li>SF2: vincente QF2 – vincente QF3</li>
-                  <li>Finale 1°-2°: vincenti SF1 e SF2</li>
-                  <li>Finale 3°-4°: perdenti SF1 e SF2</li>
-                </ul>
+                  {matches.some(m => m.round === 'QF' && m.conflict) && (
+                    <div className="warning-message">
+                      <strong>⚠️ Attenzione:</strong> Sono presenti accoppiamenti con squadre dello stesso girone.
+                      Secondo il regolamento, questi dovrebbero essere evitati ai quarti di finale.
+                    </div>
+                  )}
+                </div>
+
+                {/* Semifinali */}
+                <div className="round-section">
+                  <h4 className="round-title">Semifinali</h4>
+                  <p className="round-date">📅 Sabato 14 o Domenica 15 Marzo 2026</p>
+                  
+                  <div className="matches-grid">
+                    <div className="match-card">
+                      <div className="match-header">Semifinale 1</div>
+                      <div className="match-teams">
+                        <div className="team-line placeholder">
+                          Vincente QF1
+                        </div>
+                        <div className="vs">vs</div>
+                        <div className="team-line placeholder">
+                          Vincente QF4
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="match-card">
+                      <div className="match-header">Semifinale 2</div>
+                      <div className="match-teams">
+                        <div className="team-line placeholder">
+                          Vincente QF2
+                        </div>
+                        <div className="vs">vs</div>
+                        <div className="team-line placeholder">
+                          Vincente QF3
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Finali */}
+                <div className="round-section finals">
+                  <h4 className="round-title">Finali</h4>
+                  
+                  <div className="matches-grid">
+                    <div className="match-card final">
+                      <div className="match-header">🥇 Finale 1° - 2° posto</div>
+                      <p className="round-date">📅 Domenica 22 Marzo 2026</p>
+                      <div className="match-teams">
+                        <div className="team-line placeholder">
+                          Vincente SF1
+                        </div>
+                        <div className="vs">vs</div>
+                        <div className="team-line placeholder">
+                          Vincente SF2
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="match-card bronze">
+                      <div className="match-header">🥉 Finale 3° - 4° posto</div>
+                      <p className="round-date">📅 Sabato 21 o Domenica 22 Marzo 2026</p>
+                      <div className="match-teams">
+                        <div className="team-line placeholder">
+                          Perdente SF1
+                        </div>
+                        <div className="vs">vs</div>
+                        <div className="team-line placeholder">
+                          Perdente SF2
+                        </div>
+                      </div>
+                      <p className="match-note">
+                        ℹ️ In casa della squadra meglio classificata nella C.A.
+                      </p>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
-          </section>
-        </>
+          </div>
+        </section>
       )}
+
+      <footer className="app-footer">
+        <p>Simulatore Fasi Finali Under 18 Femminile - FIPAV Bergamo</p>
+        <p className="small">
+          Regolamento: prime 2 squadre per girone accedono ai quarti (accoppiamenti secondo classifica avulsa)
+        </p>
+      </footer>
     </div>
   );
 };

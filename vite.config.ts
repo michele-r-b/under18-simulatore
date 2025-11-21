@@ -9,7 +9,6 @@ export default defineConfig({
         target: 'https://srv6.matchshare.it',
         changeOrigin: true,
         secure: false,
-        // 👇 AGGIUNGI QUESTO
         rewrite: (path) => path.replace(/^\/matchshare/, ''),
       },
     },
