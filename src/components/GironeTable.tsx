@@ -218,12 +218,12 @@ const handleReset = () => {
                 >
                   <optgroup label="Vittoria Casa">
                     <option value="3-0">3-0 (Casa: 3 punti, Trasferta: 0 punti)</option>
-                    <option value="3-1">3-1 (Casa: 3 punti, Trasferta: 0 punt1)</option>
+                    <option value="3-1">3-1 (Casa: 3 punti, Trasferta: 0 punti)</option>
                     <option value="3-2">3-2 (Casa: 2 punti, Trasferta: 1 punto) [5° set: 15-10]</option>
                   </optgroup>
                   <optgroup label="Vittoria Trasferta">
                     <option value="0-3">0-3 (Casa: 0 punti, Trasferta: 3 punti)</option>
-                    <option value="1-3">1-3 (Casa: 0 punt1, Trasferta: 3 punti)</option>
+                    <option value="1-3">1-3 (Casa: 0 punti, Trasferta: 3 punti)</option>
                     <option value="2-3">2-3 (Casa: 1 punto, Trasferta: 2 punti) [5° set: 15-10]</option>
                   </optgroup>
                 </select>
