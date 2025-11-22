@@ -1,0 +1,5 @@
+[[redirects]]
+  from = "/matchshare/*"
+  to = "https://srv6.matchshare.it/:splat"
+  status = 200
+  force = true
