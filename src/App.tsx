@@ -24,7 +24,6 @@ import {
 
 // Components
 import {
-  AppHeader,
   AppFooter,
   Step1LoadData,
   Step2EditData,
@@ -122,13 +121,13 @@ const handleAddMatch = (
     setTeams((prev) => applyMatchResult(prev, homeTeamId, awayTeamId, result));
   };
 
-  const handleResetGirone = (girone: Girone) => {
+ const handleResetGirone = (targetGirone: Girone) => {
     setTeams((prev) => {
       // Filtra le squadre del girone da ripristinare
-      const originalGironeTeams = originalTeams.filter((t) => t.girone === girone);
+      const originalGironeTeams = originalTeams.filter((t) => t.girone === targetGirone);
       // Mantieni le altre squadre, sostituisci quelle del girone
       return prev.map((team) => {
-        if (team.girone === girone) {
+        if (team.girone === targetGirone) {
           const original = originalGironeTeams.find((t) => t.id === team.id);
           return original || team;
         }
