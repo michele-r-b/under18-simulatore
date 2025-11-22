@@ -106,7 +106,7 @@ export const Login: React.FC<LoginProps> = ({ onLogin }) => {
         </form>
 
         <div className="login-footer">
-          <p>🔒 Accesso riservato agli operatori FIPAV Bergamo</p>
+          <p></p>
         </div>
       </div>
     </div>
