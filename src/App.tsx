@@ -113,7 +113,6 @@ const App: React.FC = () => {
   };
 
 const handleAddMatch = (
-    girone: string,
     homeTeamId: string,
     awayTeamId: string,
     result: '3-0' | '3-1' | '3-2' | '0-3' | '1-3' | '2-3'

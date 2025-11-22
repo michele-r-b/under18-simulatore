@@ -10,7 +10,7 @@ interface GironeTableProps {
   girone: Girone;
   teams: TeamStats[];
   onUpdateField: (teamId: string, field: keyof TeamStats, value: number) => void;
-  onAddMatch: (girone: string, homeTeamId: string, awayTeamId: string, result: '3-0' | '3-1' | '3-2' | '0-3' | '1-3' | '2-3') => void;
+  onAddMatch: (homeTeamId: string, awayTeamId: string, result: '3-0' | '3-1' | '3-2' | '0-3' | '1-3' | '2-3') => void;
   onResetGirone: (girone: Girone) => void;  // ← AGGIUNTO
 }
 
@@ -93,7 +93,7 @@ const handleReset = () => {
     const homeName = teams.find((t) => t.id === homeTeamId)?.name || 'Squadra';
     const awayName = teams.find((t) => t.id === awayTeamId)?.name || 'Squadra';
     
-    onAddMatch(girone, homeTeamId, awayTeamId, result);
+    onAddMatch(homeTeamId, awayTeamId, result);
     addLogEntry(`Partita aggiunta: ${homeName} vs ${awayName} → Risultato: ${result}`);
     
     // Reset form
