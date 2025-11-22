@@ -93,18 +93,23 @@
   font-size: 1rem;
   transition: all 0.2s ease;
   background: white;
+  color: #333 !important;  /* ← AGGIUNTO */
+  -webkit-text-fill-color: #333 !important;  /* ← Per Safari iOS */
+  -webkit-opacity: 1 !important;  /* ← Per Safari iOS */
 }
 
 .form-group input:focus {
   outline: none;
   border-color: #667eea;
   box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
+  color: #333 !important;  /* ← AGGIUNTO */
+  -webkit-text-fill-color: #333 !important;  /* ← Per Safari iOS */
 }
 
 .form-group input::placeholder {
   color: #bbb;
+  -webkit-text-fill-color: #bbb;  /* ← AGGIUNTO */
 }
-
 .login-error {
   background: #fee;
   border: 2px solid #f88;
