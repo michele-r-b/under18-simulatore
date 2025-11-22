@@ -3,12 +3,12 @@
  * FIPAV Bergamo 2025/2026
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
 
 // Types
 // Types
-import type { TeamStats, AppStep, KnockoutMatch } from './types';
+import type { TeamStats, AppStep, KnockoutMatch, Girone } from './types';
 
 // Services
 import { loadAllGironiData, formatLoadErrors } from './services/apiService';
@@ -29,6 +29,7 @@ import {
   Step1LoadData,
   Step2EditData,
   Step3Results,
+  Login,
 } from './components';
 
 const App: React.FC = () => {
@@ -40,6 +41,32 @@ const App: React.FC = () => {
   const [avulsa, setAvulsa] = useState<TeamStats[]>([]);
   const [matches, setMatches] = useState<KnockoutMatch[]>([]);
   const [currentStep, setCurrentStep] = useState<AppStep>(1);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+ // Controlla se l'utente è già loggato
+  useEffect(() => {
+    const auth = sessionStorage.getItem('auth');
+    if (auth === 'true') {
+      setIsAuthenticated(true);
+    }
+  }, []);
+
+  const handleLogin = () => {
+    setIsAuthenticated(true);
+  };
+
+  const handleLogout = () => {
+    if (window.confirm('Vuoi davvero uscire?')) {
+      sessionStorage.removeItem('auth');
+      setIsAuthenticated(false);
+      // Reset dati
+      setTeams([]);
+      setOriginalTeams([]);
+      setAvulsa([]);
+      setMatches([]);
+      setCurrentStep(1);
+    }
+  };
 
   // Handlers
   const handleLoadData = async () => {
@@ -218,9 +245,24 @@ const handleSelectWinner = (matchId: string, winnerId: string) => {
   const teamsByGirone = groupTeamsByGirone(teams);
   const gironiCount = new Set(teams.map((t) => t.girone)).size;
 
+  // Mostra login se non autenticato
+  if (!isAuthenticated) {
+    return <Login onLogin={handleLogin} />;
+  }
+
   return (
     <div className="app-container">
-      <AppHeader />
+      <header className="app-header">
+        <div className="header-content">
+          <div>
+            <h1>🏐 Simulatore Fasi Finali</h1>
+            <p className="subtitle">Under 18 Femminile - FIPAV Bergamo 2025/2026</p>
+          </div>
+          <button onClick={handleLogout} className="logout-button">
+            🚪 Esci
+          </button>
+        </div>
+      </header>
 
       {/* Step 1: Caricamento Dati */}
       <Step1LoadData

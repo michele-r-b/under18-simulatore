@@ -12,3 +12,4 @@ export { GironeTable } from './GironeTable';
 export { AvulsaTable } from './AvulsaTable';
 export { MatchCard } from './MatchCard';
 export { PlayoffBracket } from './PlayoffBracket';
+export { Login } from './Login';
