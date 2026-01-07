@@ -1,5 +1,16 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+  functions = "netlify/functions"
+
 [[redirects]]
   from = "/matchshare/*"
-  to = "https://srv6.matchshare.it/:splat"
+  to = "/.netlify/functions/matchshare-proxy/:splat"
   status = 200
   force = true
+
+# SPA fallback (deve stare DOPO)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

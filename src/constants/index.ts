@@ -1,10 +1,6 @@
 /**
  * Costanti globali dell'applicazione
  */
-
-/**
- * Costanti globali dell'applicazione
- */
 import type { Girone } from '../types';
 
 // Mapping tra Season ID e Girone
@@ -17,10 +13,10 @@ export const SID_TO_GIRONE: Record<number, Girone> = {
 
 // Nomi dei gironi
 export const GIRONE_NAMES: Record<Girone, string> = {
-  'A': 'Girone A',
-  'B': 'Girone B',
-  'C': 'Girone C',
-  'D': 'Girone D',
+  A: 'Girone A',
+  B: 'Girone B',
+  C: 'Girone C',
+  D: 'Girone D',
 };
 
 // Season IDs da caricare
@@ -29,7 +25,7 @@ export const SIDS = [315, 316, 317, 318];
 // Funzione per generare gli URL dell'API
 export const CLASSIFICA_URLS = (sid: number): string[] => [
   `/matchshare/stats_test/rest_api/ranks2?client_name=fipavbergamo&season_id=${sid}`,
-  `/matchshare/stats_test/rest_api/fm_classifica?sid=${sid}&client_name=fipavbergamo`
+  `/matchshare/stats_test/rest_api/fm_classifica?sid=${sid}&client_name=fipavbergamo`,
 ];
 
 // Date delle fasi finali
